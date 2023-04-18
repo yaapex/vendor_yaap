@@ -111,6 +111,7 @@ PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += \
 # Gapps
 PRODUCT_PACKAGES += \
     DeviceConfigOverlay \
+    DocumentsUIOverlay \
     CertifiedPropsOverlay \
     FrameworksOverlay \
     PermissionControllerOverlay \
