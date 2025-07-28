@@ -1,0 +1,10 @@
+//
+// Copyright (C) 2024 Yet Another AOSP Project
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
+runtime_resource_overlay {
+    name: "KeyBoxOverlay",
+    product_specific: true,
+}
