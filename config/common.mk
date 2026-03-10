@@ -190,6 +190,9 @@ ifeq ($(TARGET_BUILD_GAPPS),true)
     $(call inherit-product-if-exists, vendor/google/gms/config.mk)
 else ifeq ($(TARGET_BUILD_MICROG),true)
     $(call inherit-product, vendor/microg/microg.mk)
+else
+    $(call inherit-product, vendor/gapps/arm64/arm64-vendor.mk)
+    $(call inherit-product, vendor/pixel/clocks/products/clocks.mk)
 endif
 $(call inherit-product-if-exists, vendor/google/pixel/config.mk)
 
