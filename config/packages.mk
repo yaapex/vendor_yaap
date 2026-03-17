@@ -13,6 +13,16 @@ PRODUCT_PACKAGES += \
     strace \
     vim
 
+# Overlay
+PRODUCT_PACKAGES += \
+    GlanceableHubConfigOverlay \
+    GlanceableHubSettingsConfigOverlay \
+    GlanceableHubSettingsConfigOverlay2022 \
+    GlanceableHubSysuiConfigOverlay \
+    PixelFrameworksOverlay \
+    PixelSettingsOverlay \
+    PixelSystemUIOverlay
+
 # Openssh
 PRODUCT_PACKAGES += \
     scp \
