@@ -97,9 +97,9 @@ PRODUCT_PACKAGES += \
     messaging \
     SetupWizard \
     Talkback \
-    TrichromeChrome \
-    TrichromeLibrary \
-    TrichromeWebView
+    TrichromeChromeDualArch \
+    TrichromeLibraryDualArch \
+    TrichromeWebViewDualArch
 
 # Include explicitly to work around GMS issues
 PRODUCT_PACKAGES += \
