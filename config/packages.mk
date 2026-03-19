@@ -90,7 +90,6 @@ PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
     system/%/libfuse-lite.so \
     system/%/libntfs-3g.so
 
-ifneq ($(TARGET_BUILD_GAPPS),true)
 PRODUCT_PACKAGES += \
     ESpeakNG \
     Etar \
@@ -101,7 +100,6 @@ PRODUCT_PACKAGES += \
     TrichromeChrome \
     TrichromeLibrary \
     TrichromeWebView
-endif
 
 # Include explicitly to work around GMS issues
 PRODUCT_PACKAGES += \
