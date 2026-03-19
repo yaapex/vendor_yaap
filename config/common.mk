@@ -177,8 +177,10 @@ PRODUCT_SYSTEM_EXT_PROPERTIES += \
     persist.arm64.memtag.process.system_server=off
 
 # Blur
+TARGET_ENABLE_BLUR ?= true
 ifeq ($(TARGET_ENABLE_BLUR), true)
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+    ro.custom.blur.enable=true \
     ro.surface_flinger.supports_background_blur=1
 else
 PRODUCT_PRODUCT_PROPERTIES += \
