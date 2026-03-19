@@ -15,3 +15,5 @@
 #
 # For now, just skip the ABI checks to fix build errors.
 export SKIP_ABI_CHECKS=true
+
+find vendor/pixel/clocks  \( -name "*.mk" \) -exec sed -i 's/WITH_GMS/TARGET_BUILD_GAPPS/g' {} +
