@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+
+  <!-- Kernel -->
+  <project path="kernel/oneplus/sm8150"
+           name="kernel_oneplus_sm8150"
+           remote="yaap" />
+
+  <!-- Device -->
+  <project path="device/oneplus/sm8150-common"
+           name="device_oneplus_sm8150-common"
+           remote="yaapex" />
+
+  <project path="device/oneplus/guacamoleb"
+           name="device_oneplus_guacamoleb"
+           remote="yaapex" />
+
+  <!-- Vendor -->
+  <project path="vendor/oneplus/sm8150-common"
+           name="vendor_oneplus_sm8150-common"
+           remote="yaap" />
+
+  <project path="vendor/oneplus/guacamoleb"
+           name="vendor_oneplus_guacamoleb"
+           remote="yaap" />
+
+  <!-- Hardware -->
+  <project path="hardware/oneplus"
+           name="hardware_oneplus"
+           remote="yaap" />
+
+</manifest>
