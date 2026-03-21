@@ -43,6 +43,7 @@
         <item>org.lineageos.settings.device</item>
         <item>com.android.systemui.clocks.bignum</item>
         <item>com.android.systemui.clocks.calligraphy</item>
+        <item>com.android.systemui.clocks.flex</item>
         <item>com.android.systemui.clocks.growth</item>
         <item>com.android.systemui.clocks.inflate</item>
         <item>com.android.systemui.clocks.metro</item>
