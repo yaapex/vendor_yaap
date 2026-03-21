@@ -224,6 +224,7 @@ PRODUCT_HOST_PACKAGES += \
 
 # Themes
 $(call inherit-product, vendor/themes/common.mk)
+$(call inherit-product, vendor/addons/config.mk)
 
 # Sepolicy
 $(call inherit-product, vendor/yaap/config/sepolicy.mk)
