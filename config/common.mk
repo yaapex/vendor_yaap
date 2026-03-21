@@ -210,7 +210,6 @@ ifeq ($(TARGET_BUILD_GAPPS),true)
 else ifeq ($(TARGET_BUILD_MICROG),true)
     $(call inherit-product, vendor/microg/microg.mk)
 endif
-$(call inherit-product, vendor/pixel/clocks/products/clocks.mk)
 
 # Lindroid
 ifeq ($(TARGET_BUILD_LINDROID),true)
