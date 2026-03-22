@@ -1,32 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-
   <!-- Kernel -->
-  <project path="kernel/oneplus/sm8150"
-           name="kernel_oneplus_sm8150"
-           remote="yaap" />
-
+  <project path="kernel/oneplus/sm8150" name="kernel_oneplus_sm8150" remote="yaap"/>
   <!-- Device -->
-  <project path="device/oneplus/sm8150-common"
-           name="device_oneplus_sm8150-common"
-           remote="yaapex" />
-
-  <project path="device/oneplus/guacamoleb"
-           name="device_oneplus_guacamoleb"
-           remote="yaapex" />
-
+  <project path="device/oneplus/sm8150-common" name="device_oneplus_sm8150-common" remote="yaapex"/>
+  <project path="device/oneplus/guacamoleb" name="device_oneplus_guacamoleb" remote="yaapex"/>
   <!-- Vendor -->
-  <project path="vendor/oneplus/sm8150-common"
-           name="vendor_oneplus_sm8150-common"
-           remote="yaap" />
-
-  <project path="vendor/oneplus/guacamoleb"
-           name="vendor_oneplus_guacamoleb"
-           remote="yaap" />
-
+  <project path="vendor/oneplus/sm8150-common" name="vendor_oneplus_sm8150-common" remote="yaap"/>
+  <project path="vendor/oneplus/guacamoleb" name="vendor_oneplus_guacamoleb" remote="yaap"/>
   <!-- Hardware -->
-  <project path="hardware/oneplus"
-           name="hardware_oneplus"
-           remote="yaap" />
-
+  <project path="hardware/oneplus" name="hardware_oneplus" remote="yaap"/>
+  <project name="xenxynon/certs" path="certs" remote="github" revision="main">
+    <copyfile src="bluetooth.pk8" dest="vendor/yaap/signing/keys/bluetooth.pk8"/>
+    <copyfile src="bluetooth.x509.pem" dest="vendor/yaap/signing/keys/bluetooth.x509.pem"/>
+    <copyfile src="certs.pk8" dest="vendor/yaap/signing/keys/certs.pk8"/>
+    <copyfile src="certs.x509.pem" dest="vendor/yaap/signing/keys/certs.x509.pem"/>
+    <copyfile src="cyngn-app.pk8" dest="vendor/yaap/signing/keys/cyngn-app.pk8"/>
+    <copyfile src="cyngn-app.x509.pem" dest="vendor/yaap/signing/keys/cyngn-app.x509.pem"/>
+    <copyfile src="media.pk8" dest="vendor/yaap/signing/keys/media.pk8"/>
+    <copyfile src="media.x509.pem" dest="vendor/yaap/signing/keys/media.x509.pem"/>
+    <copyfile src="networkstack.pk8" dest="vendor/yaap/signing/keys/networkstack.pk8"/>
+    <copyfile src="networkstack.x509.pem" dest="vendor/yaap/signing/keys/networkstack.x509.pem"/>
+    <copyfile src="nfc.pk8" dest="vendor/yaap/signing/keys/nfc.pk8"/>
+    <copyfile src="nfc.x509.pem" dest="vendor/yaap/signing/keys/nfc.x509.pem"/>
+    <copyfile src="otakey.pk8" dest="vendor/yaap/signing/keys/otakey.pk8"/>
+    <copyfile src="otakey.x509.pem" dest="vendor/yaap/signing/keys/otakey.x509.pem"/>
+    <copyfile src="platform.pk8" dest="vendor/yaap/signing/keys/platform.pk8"/>
+    <copyfile src="platform.x509.pem" dest="vendor/yaap/signing/keys/platform.x509.pem"/>
+    <copyfile src="releasekey.key" dest="vendor/yaap/signing/keys/releasekey.key"/>
+    <copyfile src="releasekey.pk8" dest="vendor/yaap/signing/keys/releasekey.pk8"/>
+    <copyfile src="releasekey.x509.pem" dest="vendor/yaap/signing/keys/releasekey.x509.pem"/>
+    <copyfile src="sdk_sandbox.pk8" dest="vendor/yaap/signing/keys/sdk_sandbox.pk8"/>
+    <copyfile src="sdk_sandbox.x509.pem" dest="vendor/yaap/signing/keys/sdk_sandbox.x509.pem"/>
+    <copyfile src="shared.pk8" dest="vendor/yaap/signing/keys/shared.pk8"/>
+    <copyfile src="shared.x509.pem" dest="vendor/yaap/signing/keys/shared.x509.pem"/>
+    <copyfile src="testcert.pk8" dest="vendor/yaap/signing/keys/testcert.pk8"/>
+    <copyfile src="testcert.x509.pem" dest="vendor/yaap/signing/keys/testcert.x509.pem"/>
+    <copyfile src="testkey.pk8" dest="vendor/yaap/signing/keys/testkey.pk8"/>
+    <copyfile src="testkey.x509.pem" dest="vendor/yaap/signing/keys/testkey.x509.pem"/>
+    <copyfile src="verity.pk8" dest="vendor/yaap/signing/keys/verity.pk8"/>
+    <copyfile src="verity.x509.pem" dest="vendor/yaap/signing/keys/verity.x509.pem"/>
+  </project>
 </manifest>
