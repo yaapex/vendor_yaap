@@ -124,6 +124,7 @@ PRODUCT_PACKAGES += \
     FrameworksOverlayVanilla \
     LatinIMEOverlayVanilla \
     OpenDeltaOverlayVanilla \
+    SettingsOverlayVanilla \
     ThemePickerOverlayVanilla
 
 # Include LatinIME dictionaries
