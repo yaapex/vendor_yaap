@@ -101,12 +101,10 @@ SYSTEMUI_OPTIMIZE_JAVA ?= true
 
 # Product overlay
 PRODUCT_PACKAGE_OVERLAYS += \
-    vendor/yaap/overlay/frameworks \
-    vendor/yaap/overlay/packages
+    vendor/yaap/overlay/frameworks
 
 PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += \
     vendor/yaap/overlay/frameworks \
-    vendor/yaap/overlay/packages
 
 # Gapps
 PRODUCT_PACKAGES += \
@@ -124,6 +122,7 @@ PRODUCT_PACKAGES += \
     FrameworksOverlayVanilla \
     LatinIMEOverlayVanilla \
     OpenDeltaOverlayVanilla \
+    SettingsOverlayVanilla \
     ThemePickerOverlayVanilla
 
 # Include LatinIME dictionaries
