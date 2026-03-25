@@ -44,12 +44,13 @@ function showHelpAndExit {
         echo -e "${CLR_BLD_BLU}  -b, --backup-unsigned Store a copy of unsigned package along with signed${CLR_RST}"
         echo -e "${CLR_BLD_BLU}  -d, --delta           Generate a delta ota from the specified target_files zip${CLR_RST}"
         echo -e "${CLR_BLD_BLU}  -z, --imgzip          Generate fastboot flashable image zip from signed target_files${CLR_RST}"
+        echo -e "${CLR_BLD_BLU}  -g, --gapps,--gms     Build with GApps (TARGET_BUILD_GAPPS=true)${CLR_RST}"
         exit 1
 }
 
 # Setup getopt.
-long_opts="help,clean,installclean,repo-sync,build-type:,jobs:,module:,sign-keys:,pwfile:,backup-unsigned,delta:,imgzip,version:"
-getopt_cmd=$(getopt -o hcirv:t:j:m:s:p:bd:zn: --long "$long_opts" \
+long_opts="help,clean,installclean,repo-sync,build-type:,jobs:,module:,sign-keys:,pwfile:,backup-unsigned,delta:,imgzip,gapps"
+getopt_cmd=$(getopt -o hcirv:t:j:m:s:p:bd:zg --long "$long_opts" \
             -n $(basename $0) -- "$@") || \
             { echo -e "${CLR_BLD_RED}\nError: Getopt failed. Extra args\n${CLR_RST}"; showHelpAndExit; exit 1;}
 
@@ -69,6 +70,7 @@ while true; do
         -b|--backup-unsigned|b|backup-unsigned) FLAG_BACKUP_UNSIGNED=y;;
         -d|--delta|d|delta) DELTA_TARGET_FILES="$2"; shift;;
         -z|--imgzip|img|imgzip) FLAG_IMG_ZIP=y;;
+        -g|--gapps|--gms) FLAG_GAPPS=y;;
         --) shift; break;;
     esac
     shift
@@ -140,6 +142,15 @@ if [ "$FLAG_SYNC" = 'y' ]; then
         repo sync -j"$JOBS" -c --current-branch --no-tags --force-sync
 fi
 
+# Gapps or nor
+if [ "$FLAG_GAPPS" = 'y' ]; then
+    export TARGET_BUILD_GAPPS=true
+    echo -e "${CLR_BLD_CYA}GApps: enabled${CLR_RST}"
+else
+    export TARGET_BUILD_GAPPS=false
+    echo -e "${CLR_BLD_CYA}GApps: disabled${CLR_RST}"
+fi
+
 # Check the starting time (of the real build process)
 TIME_START=$(date +%s.%N)
 
@@ -151,7 +162,7 @@ echo -e ""
 # Lunch-time!
 echo -e "${CLR_BLD_BLU}Lunching $DEVICE${CLR_RST} ${CLR_CYA}(Including dependencies sync)${CLR_RST}"
 echo -e ""
-lunch "yaap_$DEVICE-bp4a-$BUILD_TYPE"
+lunch "yaap_$DEVICE-$BUILD_TYPE"
 YAAP_VERSION="$(get_build_var YAAP_VERSION)"
 #TARGET_KERNEL_OUT="$DIR_ROOT/$(get_build_var KERNEL_PREBUILT_DIR)"
 #TARGET_KERNEL_VERSION="$(get_build_var TARGET_KERNEL_VERSION)"
