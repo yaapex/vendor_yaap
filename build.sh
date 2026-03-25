@@ -94,6 +94,11 @@ fi
 cd $(dirname $0)
 DIR_ROOT=$(pwd)
 
+# Output directory for release zips
+DIR_RELEASE="$DIR_ROOT/releases/$DEVICE"
+mkdir -p "$DIR_RELEASE"
+echo -e "${CLR_BLD_CYA}Release output: $DIR_RELEASE${CLR_RST}"
+
 # Make sure everything looks sane so far
 if [ ! -d "$DIR_ROOT/vendor/yaap" ]; then
         echo -e "${CLR_BLD_RED}error: insane root directory ($DIR_ROOT)${CLR_RST}"
@@ -212,6 +217,9 @@ if [ -d "$DIR_ROOT/kernel_platform/" ] && (
     eval "${EXTRA_KERNEL_FLAGS}" ANDROID_KERNEL_OUT="${TARGET_KERNEL_OUT}" KERNEL_VARIANT=gki ./kernel_platform/build/android/prepare_vendor.sh
 fi
 
+# Intermediates path shorthand
+TARGET_FILES_INTERMEDIATES="$OUT/obj/PACKAGING/target_files_intermediates"
+
 # Build a specific module(s)
 if [ "${MODULES}" ]; then
     m ${MODULES[@]} "$CMD"
@@ -226,22 +234,19 @@ elif [ "${KEY_MAPPINGS}" ]; then
 
     # Make target-files-package
     m otatools target-files-package "$CMD"
-
     checkExit
 
     echo -e "${CLR_BLD_BLU}Signing target files apks${CLR_RST}"
     sign_target_files_apks -o -d $KEY_MAPPINGS \
-        "$OUT"/obj/PACKAGING/target_files_intermediates/yaap_$DEVICE-target_files.zip \
-        YAAP-$YAAP_VERSION-signed-target_files.zip
-
+        "$TARGET_FILES_INTERMEDIATES/yaap_$DEVICE-target_files.zip" \
+        "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip"
     checkExit
 
     echo -e "${CLR_BLD_BLU}Generating signed install package${CLR_RST}"
     ota_from_target_files -k $KEY_MAPPINGS/releasekey \
         --block ${INCREMENTAL} \
-        YAAP-$YAAP_VERSION-signed-target_files.zip \
-        YAAP-$YAAP_VERSION.zip
-
+        "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip" \
+        "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
     checkExit
 
     if [ "$DELTA_TARGET_FILES" ]; then
@@ -252,45 +257,43 @@ elif [ "${KEY_MAPPINGS}" ]; then
         fi
         ota_from_target_files -k $KEY_MAPPINGS/releasekey \
             --block --incremental_from $DELTA_TARGET_FILES \
-            YAAP-$YAAP_VERSION-signed-target_files.zip \
-            YAAP-$YAAP_VERSION-delta.zip
+            "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip" \
+            "$DIR_RELEASE/YAAP-$YAAP_VERSION-delta.zip"
         checkExit
     fi
 
     if [ "$FLAG_IMG_ZIP" = 'y' ]; then
         echo -e "${CLR_BLD_BLU}Generating signed fastboot package${CLR_RST}"
         img_from_target_files \
-            YAAP-$YAAP_VERSION-signed-target_files.zip \
-            YAAP-$YAAP_VERSION-image.zip
+            "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip" \
+            "$DIR_RELEASE/YAAP-$YAAP_VERSION-image.zip"
         checkExit
     fi
-# Build rom package
+
+# Build rom package with fastboot zip
 elif [ "$FLAG_IMG_ZIP" = 'y' ]; then
     m otatools target-files-package "$CMD"
-
     checkExit
 
     echo -e "${CLR_BLD_BLU}Generating install package${CLR_RST}"
     ota_from_target_files \
-        "$OUT"/obj/PACKAGING/target_files_intermediates/yaap_$DEVICE-target_files.zip \
-        YAAP-$YAAP_VERSION.zip
-
+        "$TARGET_FILES_INTERMEDIATES/yaap_$DEVICE-target_files.zip" \
+        "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
     checkExit
 
     echo -e "${CLR_BLD_BLU}Generating fastboot package${CLR_RST}"
     img_from_target_files \
-        "$OUT"/obj/PACKAGING/target_files_intermediates/YAAP_$DEVICE-target_files.zip \
-        YAAP-$YAAP_VERSION-image.zip
-
+        "$TARGET_FILES_INTERMEDIATES/yaap_$DEVICE-target_files.zip" \
+        "$DIR_RELEASE/YAAP-$YAAP_VERSION-image.zip"
     checkExit
 
 else
     m otapackage "$CMD"
-
     checkExit
 
     cp -f $OUT/YAAP_$DEVICE-ota.zip $OUT/YAAP-$YAAP_VERSION.zip
     echo "Package Complete: $OUT/YAAP-$YAAP_VERSION.zip"
+
 fi
 echo -e ""
 
