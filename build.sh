@@ -142,13 +142,18 @@ if [ "$FLAG_SYNC" = 'y' ]; then
         repo sync -j"$JOBS" -c --current-branch --no-tags --force-sync
 fi
 
-# Gapps or nor
+# Gapps or not
 if [ "$FLAG_GAPPS" = 'y' ]; then
     export TARGET_BUILD_GAPPS=true
     echo -e "${CLR_BLD_CYA}GApps: enabled${CLR_RST}"
 else
     export TARGET_BUILD_GAPPS=false
     echo -e "${CLR_BLD_CYA}GApps: disabled${CLR_RST}"
+fi
+
+# If external sign keys specified, disable inline signing
+if [ "${KEY_MAPPINGS}" ]; then
+    export YAAP_INLINE_SIGNING=false
 fi
 
 # Check the starting time (of the real build process)

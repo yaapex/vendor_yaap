@@ -31,7 +31,14 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
   ro.modversion=$(YAAP_VERSION)
 
 # Signing
+### set YAAP_INLINE_SIGNING := false in DT to exluxde signing
+### introduction of this flag is because delta ota cannot be generated for unsigned builds for now
+### build removes target-files every installclean/clean
+### perhaps target files can be copied somewhere regardless of build type, will see later
+
+YAAP_INLINE_SIGNING ?= true
 ifneq (eng,$(TARGET_BUILD_VARIANT))
+ifeq ($(YAAP_INLINE_SIGNING),true)
 ifneq (,$(wildcard vendor/yaap/signing/keys/releasekey.pk8))
 PRODUCT_DEFAULT_DEV_CERTIFICATE := vendor/yaap/signing/keys/releasekey
 PRODUCT_MAINLINE_BLUETOOTH_SEPOLICY_DEV_CERTIFICATES := $(dir $(PRODUCT_DEFAULT_DEV_CERTIFICATE))
@@ -42,4 +49,5 @@ endif
 ifneq (,$(wildcard vendor/yaap/signing/keys/otakey.x509.pem))
 PRODUCT_OTA_PUBLIC_KEYS := vendor/yaap/signing/keys/otakey.x509.pem
 endif
-endif
+endif # YAAP_INLINE_SIGNING
+endif # eng
