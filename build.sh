@@ -126,12 +126,6 @@ if [ -z "$JOBS" ]; then
         fi
 fi
 
-# Grab the build version
-YAAP_DISPLAY_VERSION="$(cat $DIR_ROOT/vendor/yaap/config/version.mk | grep 'YAAP_VERSION := *' | sed 's/.*= //')"
-if [ $YAAP_BUILD_VERSION ]; then
-    YAAP_DISPLAY_VERSION+="$YAAP_VERSION"
-fi
-
 # Prep for a clean build, if requested so
 if [ "$FLAG_CLEAN_BUILD" = 'y' ]; then
         echo -e "${CLR_BLD_BLU}Cleaning output files left from old builds${CLR_RST}"
@@ -179,6 +173,7 @@ echo -e "${CLR_BLD_BLU}Lunching $DEVICE${CLR_RST} ${CLR_CYA}(Including dependenc
 echo -e ""
 lunch "yaap_$DEVICE-$BUILD_TYPE"
 YAAP_VERSION="$(get_build_var YAAP_VERSION)"
+YAAP_DISPLAY_VERSION="$(cat $DIR_ROOT/vendor/yaap/config/version.mk | grep 'YAAP_VERSION := *' | sed 's/.*= //')"
 #TARGET_KERNEL_OUT="$DIR_ROOT/$(get_build_var KERNEL_PREBUILT_DIR)"
 #TARGET_KERNEL_VERSION="$(get_build_var TARGET_KERNEL_VERSION)"
 checkExit
