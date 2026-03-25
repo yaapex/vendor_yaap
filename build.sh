@@ -154,6 +154,11 @@ fi
 # If external sign keys specified, disable inline signing
 if [ "${KEY_MAPPINGS}" ]; then
     export YAAP_INLINE_SIGNING=false
+    echo -e "${CLR_BLD_CYA}Inline signing: disabled (external keys provided)${CLR_RST}"
+elif [ "${YAAP_INLINE_SIGNING}" = 'false' ]; then
+    echo -e "${CLR_BLD_CYA}Inline signing: disabled${CLR_RST}"
+else
+    echo -e "${CLR_BLD_CYA}Inline signing: enabled${CLR_RST}"
 fi
 
 # Check the starting time (of the real build process)
