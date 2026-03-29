@@ -286,7 +286,7 @@ else
     m otapackage "$CMD"
     checkExit
 
-    cp -f $OUT/YAAP_$DEVICE-ota.zip $OUT/YAAP-$YAAP_VERSION.zip
+    cp -f $OUT/yaap_$DEVICE-ota.zip $OUT/YAAP-$YAAP_VERSION.zip
     echo "Package Complete: $OUT/YAAP-$YAAP_VERSION.zip"
 
 fi
