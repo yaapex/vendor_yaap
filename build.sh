@@ -1,84 +1,94 @@
 #!/usr/bin/env bash
-# AOSPA build helper script
+# YAAP build helper script
+
+set -o pipefail
 
 # red = errors, cyan = warnings, green = confirmations, blue = informational
 # plain for generic text, bold for titles, reset flag at each end of line
 # plain blue should not be used for readability reasons - use plain cyan instead
-CLR_RST=$(tput sgr0)                        ## reset flag
-CLR_RED=$CLR_RST$(tput setaf 1)             #  red, plain
-CLR_GRN=$CLR_RST$(tput setaf 2)             #  green, plain
-CLR_BLU=$CLR_RST$(tput setaf 4)             #  blue, plain
-CLR_CYA=$CLR_RST$(tput setaf 6)             #  cyan, plain
-CLR_BLD=$(tput bold)                        ## bold flag
-CLR_BLD_RED=$CLR_RST$CLR_BLD$(tput setaf 1) #  red, bold
-CLR_BLD_GRN=$CLR_RST$CLR_BLD$(tput setaf 2) #  green, bold
-CLR_BLD_BLU=$CLR_RST$CLR_BLD$(tput setaf 4) #  blue, bold
-CLR_BLD_CYA=$CLR_RST$CLR_BLD$(tput setaf 6) #  cyan, bold
+if [ -t 1 ]; then
+    CLR_RST=$(tput sgr0)                         ## reset flag
+    CLR_RED=$CLR_RST$(tput setaf 1)              #  red, plain
+    CLR_GRN=$CLR_RST$(tput setaf 2)              #  green, plain
+    CLR_CYA=$CLR_RST$(tput setaf 6)              #  cyan, plain
+    CLR_BLD=$(tput bold)                         ## bold flag
+    CLR_BLD_RED=$CLR_RST$CLR_BLD$(tput setaf 1) #  red, bold
+    CLR_BLD_GRN=$CLR_RST$CLR_BLD$(tput setaf 2) #  green, bold
+    CLR_BLD_BLU=$CLR_RST$CLR_BLD$(tput setaf 4) #  blue, bold
+    CLR_BLD_CYA=$CLR_RST$CLR_BLD$(tput setaf 6) #  cyan, bold
+else
+    CLR_RST="" CLR_RED="" CLR_GRN="" CLR_CYA=""
+    CLR_BLD="" CLR_BLD_RED="" CLR_BLD_GRN="" CLR_BLD_BLU="" CLR_BLD_CYA=""
+fi
 
 # Set defaults
 BUILD_TYPE="userdebug"
+MODULES=()
+CMD=()
 
-function checkExit () {
-    EXIT_CODE=$?
-    if [ $EXIT_CODE -ne 0 ]; then
+function checkExit() {
+    local exit_code=$?
+    if [ "$exit_code" -ne 0 ]; then
         echo "${CLR_BLD_RED}Build failed!${CLR_RST}"
-        echo -e ""
-        exit $EXIT_CODE
+        echo ""
+        exit "$exit_code"
     fi
 }
 
 # Output usage help
-function showHelpAndExit {
-        echo -e "${CLR_BLD_BLU}Usage: $0 <device> [options]${CLR_RST}"
-        echo -e ""
-        echo -e "${CLR_BLD_BLU}Options:${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -h, --help            Display this help message${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -c, --clean           Wipe the tree before building${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -i, --installclean    Dirty build - Use 'installclean'${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -r, --repo-sync       Sync before building${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -t, --build-type      Specify build type${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -j, --jobs            Specify jobs/threads to use${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -m, --module          Build a specific module${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -s, --sign-keys       Specify path to sign key mappings${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -p, --pwfile          Specify path to sign key password file${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -b, --backup-unsigned Store a copy of unsigned package along with signed${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -d, --delta           Generate a delta ota from the specified target_files zip${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -z, --imgzip          Generate fastboot flashable image zip from signed target_files${CLR_RST}"
-        echo -e "${CLR_BLD_BLU}  -g, --gapps,--gms     Build with GApps (TARGET_BUILD_GAPPS=true)${CLR_RST}"
-        exit 1
+function showHelpAndExit() {
+    echo "${CLR_BLD_BLU}Usage: $0 <device> [options]${CLR_RST}"
+    echo ""
+    echo "${CLR_BLD_BLU}Options:${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -h, --help            Display this help message${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -c, --clean           Wipe the tree before building${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -i, --installclean    Dirty build - Use 'installclean'${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -r, --repo-sync       Sync before building${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -t, --build-type      Specify build type (default: userdebug)${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -j, --jobs            Specify jobs/threads to use${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -m, --module          Build a specific module${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -s, --sign-keys       Specify path to sign key mappings${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -p, --pwfile          Specify path to sign key password file${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -b, --backup-unsigned Store a copy of unsigned package along with signed${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -d, --delta           Generate a delta OTA from the specified target_files zip${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -z, --imgzip          Generate fastboot flashable image zip from signed target_files${CLR_RST}"
+    echo "${CLR_BLD_BLU}  -g, --gapps           Build with GApps (TARGET_BUILD_GAPPS=true)${CLR_RST}"
+    exit 1
 }
 
-# Setup getopt.
-long_opts="help,clean,installclean,repo-sync,build-type:,jobs:,module:,sign-keys:,pwfile:,backup-unsigned,delta:,imgzip,gapps"
-getopt_cmd=$(getopt -o hcirv:t:j:m:s:p:bd:zg --long "$long_opts" \
-            -n $(basename $0) -- "$@") || \
-            { echo -e "${CLR_BLD_RED}\nError: Getopt failed. Extra args\n${CLR_RST}"; showHelpAndExit; exit 1;}
+# Setup getopt
+long_opts="help,clean,installclean,repo-sync,build-type:,jobs:,module:,sign-keys:,pwfile:,backup-unsigned,delta:,imgzip,gapps,gms"
+getopt_cmd=$(getopt -o hcirt:j:m:s:p:bd:zg --long "$long_opts" \
+    -n "$(basename "$0")" -- "$@") || {
+    echo "${CLR_BLD_RED}Error: Getopt failed. Extra args${CLR_RST}"
+    showHelpAndExit
+}
 
 eval set -- "$getopt_cmd"
 
 while true; do
     case "$1" in
-        -h|--help|h|help) showHelpAndExit;;
-        -c|--clean|c|clean) FLAG_CLEAN_BUILD=y;;
-        -i|--installclean|i|installclean) FLAG_INSTALLCLEAN_BUILD=y;;
-        -r|--repo-sync|r|repo-sync) FLAG_SYNC=y;;
-        -t|--build-type|t|build-type) BUILD_TYPE="$2"; shift;;
-        -j|--jobs|j|jobs) JOBS="$2"; shift;;
-        -m|--module|m|module) MODULES+=("$2"); echo $2; shift;;
-        -s|--sign-keys|s|sign-keys) KEY_MAPPINGS="$2"; shift;;
-        -p|--pwfile|p|pwfile) PWFILE="$2"; shift;;
-        -b|--backup-unsigned|b|backup-unsigned) FLAG_BACKUP_UNSIGNED=y;;
-        -d|--delta|d|delta) DELTA_TARGET_FILES="$2"; shift;;
-        -z|--imgzip|img|imgzip) FLAG_IMG_ZIP=y;;
-        -g|--gapps|--gms) FLAG_GAPPS=y;;
-        --) shift; break;;
+        -h|--help)            showHelpAndExit ;;
+        -c|--clean)           FLAG_CLEAN_BUILD=y ;;
+        -i|--installclean)    FLAG_INSTALLCLEAN_BUILD=y ;;
+        -r|--repo-sync)       FLAG_SYNC=y ;;
+        -t|--build-type)      BUILD_TYPE="$2"; shift ;;
+        -j|--jobs)            JOBS="$2"; shift ;;
+        -m|--module)          MODULES+=("$2"); shift ;;
+        -s|--sign-keys)       KEY_MAPPINGS="$2"; shift ;;
+        -p|--pwfile)          PWFILE="$2"; shift ;;
+        -b|--backup-unsigned) FLAG_BACKUP_UNSIGNED=y ;;
+        -d|--delta)           DELTA_TARGET_FILES="$2"; shift ;;
+        -z|--imgzip)          FLAG_IMG_ZIP=y ;;
+        -g|--gapps|--gms)     FLAG_GAPPS=y ;;
+        --)                   shift; break ;;
     esac
     shift
 done
 
 # Mandatory argument
 if [ $# -eq 0 ]; then
-    echo -e "${CLR_BLD_RED}Error: No device specified${CLR_RST}"
+    echo "${CLR_BLD_RED}Error: No device specified${CLR_RST}"
     showHelpAndExit
 fi
 export DEVICE="$1"; shift
@@ -86,217 +96,235 @@ export DEVICE="$1"; shift
 # Make sure we are running on 64-bit before carrying on with anything
 ARCH=$(uname -m | sed 's/x86_//;s/i[3-6]86/32/')
 if [ "$ARCH" != "64" ]; then
-        echo -e "${CLR_BLD_RED}error: unsupported arch (expected: 64, found: $ARCH)${CLR_RST}"
-        exit 1
+    echo "${CLR_BLD_RED}error: unsupported arch (expected: 64, found: $ARCH)${CLR_RST}"
+    exit 1
 fi
 
 # Set up paths
-cd $(dirname $0)
+cd "$(dirname "$0")" || { echo "${CLR_BLD_RED}error: cannot cd to script directory${CLR_RST}"; exit 1; }
 DIR_ROOT=$(pwd)
-
-# Output directory for release zips
-DIR_RELEASE="$DIR_ROOT/releases/$DEVICE"
-mkdir -p "$DIR_RELEASE"
-echo -e "${CLR_BLD_CYA}Release output: $DIR_RELEASE${CLR_RST}"
 
 # Make sure everything looks sane so far
 if [ ! -d "$DIR_ROOT/vendor/yaap" ]; then
-        echo -e "${CLR_BLD_RED}error: insane root directory ($DIR_ROOT)${CLR_RST}"
-        exit 1
-fi
-
-# Initializationizing!
-echo -e "${CLR_BLD_BLU}Setting up the environment${CLR_RST}"
-echo -e ""
-. build/envsetup.sh
-echo -e ""
-
-# Use the thread count specified by user
-CMD=""
-if [ $JOBS ]; then
-  CMD+="-j$JOBS"
+    echo "${CLR_BLD_RED}error: insane root directory ($DIR_ROOT)${CLR_RST}"
+    exit 1
 fi
 
 # Pick the default thread count (allow overrides from the environment)
 if [ -z "$JOBS" ]; then
-        if [ "$(uname -s)" = 'Darwin' ]; then
-                JOBS=$(sysctl -n machdep.cpu.core_count)
-        else
-                JOBS=$(cat /proc/cpuinfo | grep '^processor' | wc -l)
-        fi
+    if [ "$(uname -s)" = 'Darwin' ]; then
+        JOBS=$(sysctl -n machdep.cpu.core_count)
+    else
+        JOBS=$(grep -c '^processor' /proc/cpuinfo)
+    fi
 fi
+CMD+=(-j"$JOBS")
+
+# Output directory for release zips
+DIR_RELEASE="$DIR_ROOT/releases/$DEVICE"
+mkdir -p "$DIR_RELEASE"
+echo "${CLR_BLD_CYA}Release output: $DIR_RELEASE${CLR_RST}"
+
+# Initializationizing!
+echo "${CLR_BLD_BLU}Setting up the environment${CLR_RST}"
+echo ""
+. build/envsetup.sh
+echo ""
 
 # Prep for a clean build, if requested so
 if [ "$FLAG_CLEAN_BUILD" = 'y' ]; then
-        echo -e "${CLR_BLD_BLU}Cleaning output files left from old builds${CLR_RST}"
-        echo -e ""
-        m clobber "$CMD"
-        [ -d "$DIR_ROOT/kernel_platform/out/" ] && rm -r "$DIR_ROOT/kernel_platform/out/"
+    echo "${CLR_BLD_BLU}Cleaning output files left from old builds${CLR_RST}"
+    echo ""
+    m clobber "${CMD[@]}"
+    checkExit
+    [ -d "$DIR_ROOT/kernel_platform/out/" ] && rm -rf "$DIR_ROOT/kernel_platform/out/"
 fi
 
 # Sync up, if asked to
 if [ "$FLAG_SYNC" = 'y' ]; then
-        echo -e "${CLR_BLD_BLU}Downloading the latest source files${CLR_RST}"
-        echo -e ""
-        repo sync -j"$JOBS" -c --current-branch --no-tags --force-sync
+    echo "${CLR_BLD_BLU}Downloading the latest source files${CLR_RST}"
+    echo ""
+    repo sync -j"$JOBS" -c --current-branch --no-tags --no-clone-bundle --force-sync
+    checkExit
 fi
 
-# Gapps or not
+# GApps or not
 if [ "$FLAG_GAPPS" = 'y' ]; then
     export TARGET_BUILD_GAPPS=true
-    echo -e "${CLR_BLD_CYA}GApps: enabled${CLR_RST}"
+    echo "${CLR_BLD_CYA}GApps: enabled${CLR_RST}"
 else
     export TARGET_BUILD_GAPPS=false
-    echo -e "${CLR_BLD_CYA}GApps: disabled${CLR_RST}"
+    echo "${CLR_BLD_CYA}GApps: disabled${CLR_RST}"
 fi
 
 # If external sign keys specified, disable inline signing
-if [ "${KEY_MAPPINGS}" ]; then
+if [ -n "${KEY_MAPPINGS}" ]; then
     export YAAP_INLINE_SIGNING=false
-    echo -e "${CLR_BLD_CYA}Inline signing: disabled (external keys provided)${CLR_RST}"
+    echo "${CLR_BLD_CYA}Inline signing: disabled (external keys provided)${CLR_RST}"
 elif [ "${YAAP_INLINE_SIGNING}" = 'false' ]; then
-    echo -e "${CLR_BLD_CYA}Inline signing: disabled${CLR_RST}"
+    echo "${CLR_BLD_CYA}Inline signing: disabled${CLR_RST}"
 else
-    echo -e "${CLR_BLD_CYA}Inline signing: enabled${CLR_RST}"
+    echo "${CLR_BLD_CYA}Inline signing: enabled${CLR_RST}"
 fi
 
+echo ""
+
+# Pre-build summary
+echo "${CLR_BLD_BLU}=== Build Configuration ===${CLR_RST}"
+echo "${CLR_CYA}  Device    : $DEVICE${CLR_RST}"
+echo "${CLR_CYA}  Type      : $BUILD_TYPE${CLR_RST}"
+echo "${CLR_CYA}  Jobs      : $JOBS${CLR_RST}"
+echo "${CLR_CYA}  GApps     : ${FLAG_GAPPS:-n}${CLR_RST}"
+echo "${CLR_CYA}  Clean     : ${FLAG_CLEAN_BUILD:-n}${CLR_RST}"
+echo "${CLR_CYA}  Sync      : ${FLAG_SYNC:-n}${CLR_RST}"
+[ -n "${KEY_MAPPINGS}" ] && echo "${CLR_CYA}  Sign keys : $KEY_MAPPINGS${CLR_RST}"
+[ -n "${MODULES[*]}" ]   && echo "${CLR_CYA}  Modules   : ${MODULES[*]}${CLR_RST}"
+echo ""
+
 # Check the starting time (of the real build process)
-TIME_START=$(date +%s.%N)
+TIME_START=$(date +%s)
 
 # Friendly logging to tell the user everything is working fine is always nice
-echo -e "${CLR_BLD_GRN}Building YAAP for $DEVICE${CLR_RST}"
-echo -e "${CLR_GRN}Start time: $(date)${CLR_RST}"
-echo -e ""
+echo "${CLR_BLD_GRN}Building YAAP for $DEVICE${CLR_RST}"
+echo "${CLR_GRN}Start time: $(date)${CLR_RST}"
+echo ""
 
 # Lunch-time!
-echo -e "${CLR_BLD_BLU}Lunching $DEVICE${CLR_RST} ${CLR_CYA}(Including dependencies sync)${CLR_RST}"
-echo -e ""
+echo "${CLR_BLD_BLU}Lunching $DEVICE${CLR_RST} ${CLR_CYA}(Including dependencies sync)${CLR_RST}"
+echo ""
 lunch "yaap_$DEVICE-$BUILD_TYPE"
-YAAP_VERSION="$(get_build_var YAAP_VERSION)"
-YAAP_DISPLAY_VERSION="$(cat $DIR_ROOT/vendor/yaap/config/version.mk | grep 'YAAP_VERSION := *' | sed 's/.*= //')"
-#TARGET_KERNEL_OUT="$DIR_ROOT/$(get_build_var KERNEL_PREBUILT_DIR)"
-#TARGET_KERNEL_VERSION="$(get_build_var TARGET_KERNEL_VERSION)"
 checkExit
-echo -e ""
+
+YAAP_VERSION="$(get_build_var YAAP_VERSION)"
+TARGET_KERNEL_OUT="$DIR_ROOT/$(get_build_var KERNEL_PREBUILT_DIR)"
+TARGET_KERNEL_VERSION="$(get_build_var TARGET_KERNEL_VERSION)"
+echo ""
 
 # Perform installclean, if requested so
 if [ "$FLAG_INSTALLCLEAN_BUILD" = 'y' ]; then
-	echo -e "${CLR_BLD_BLU}Cleaning compiled image files left from old builds${CLR_RST}"
-	echo -e ""
-	m installclean "$CMD"
+    echo "${CLR_BLD_BLU}Cleaning compiled image files left from old builds${CLR_RST}"
+    echo ""
+    m installclean "${CMD[@]}"
+    checkExit
 fi
 
 # Build away!
-echo -e "${CLR_BLD_BLU}Starting compilation${CLR_RST}"
-echo -e ""
+echo "${CLR_BLD_BLU}Starting compilation${CLR_RST}"
+echo ""
 
-# Build kernel platform if it exists and the kernel version is supported
-if [ -d "$DIR_ROOT/kernel_platform/" ] && (
-   [ "${TARGET_KERNEL_VERSION}" != "4.4" ] &&
-   [ "${TARGET_KERNEL_VERSION}" != "4.9" ] &&
-   [ "${TARGET_KERNEL_VERSION}" != "4.14" ] &&
-   [ "${TARGET_KERNEL_VERSION}" != "4.19" ] &&
-   [ "${TARGET_KERNEL_VERSION}" != "5.4" ] ); then
+# Build kernel platform if it exists and the kernel version is not a legacy one
+LEGACY_KERNELS=("4.4" "4.9" "4.14" "4.19" "5.4")
+KERNEL_IS_LEGACY=false
+for kv in "${LEGACY_KERNELS[@]}"; do
+    [ "${TARGET_KERNEL_VERSION}" = "$kv" ] && KERNEL_IS_LEGACY=true && break
+done
 
-    EXTRA_KERNEL_FLAGS=""
+if [ -d "$DIR_ROOT/kernel_platform/" ] && [ "$KERNEL_IS_LEGACY" = false ] && [ -n "${TARGET_KERNEL_VERSION}" ]; then
+    EXTRA_KERNEL_ENV=()
     if [ "${BUILD_TYPE}" = "user" ]; then
-        EXTRA_KERNEL_FLAGS+=' LTO="full"'
-    fi
-    if [ "${BUILD_TYPE}" != "user" ]; then
-        EXTRA_KERNEL_FLAGS+=' LZ4_RAMDISK_COMPRESS_ARGS="--fast" LTO="thin"'
+        EXTRA_KERNEL_ENV+=(LTO=full)
+    else
+        EXTRA_KERNEL_ENV+=(LZ4_RAMDISK_COMPRESS_ARGS=--fast LTO=thin)
     fi
     if [ "${FLAG_CLEAN_BUILD}" = 'y' ] || [ "${FLAG_INSTALLCLEAN_BUILD}" = 'y' ]; then
-        EXTRA_KERNEL_FLAGS+=' RECOMPILE_KERNEL=1'
-        [ -d "${TARGET_KERNEL_OUT}" ] && rm -r "${TARGET_KERNEL_OUT}"
+        EXTRA_KERNEL_ENV+=(RECOMPILE_KERNEL=1)
+        [ -d "${TARGET_KERNEL_OUT}" ] && rm -rf "${TARGET_KERNEL_OUT}"
     fi
-    eval "${EXTRA_KERNEL_FLAGS}" ANDROID_KERNEL_OUT="${TARGET_KERNEL_OUT}" KERNEL_VARIANT=gki ./kernel_platform/build/android/prepare_vendor.sh
+    env "${EXTRA_KERNEL_ENV[@]}" \
+        ANDROID_KERNEL_OUT="${TARGET_KERNEL_OUT}" \
+        KERNEL_VARIANT=gki \
+        ./kernel_platform/build/android/prepare_vendor.sh
+    checkExit
 fi
 
 # Intermediates path shorthand
 TARGET_FILES_INTERMEDIATES="$OUT/obj/PACKAGING/target_files_intermediates"
 
 # Build a specific module(s)
-if [ "${MODULES}" ]; then
-    m ${MODULES[@]} "$CMD"
+if [ "${#MODULES[@]}" -gt 0 ]; then
+    m "${MODULES[@]}" "${CMD[@]}"
     checkExit
 
-# Build signed rom package if specified
-elif [ "${KEY_MAPPINGS}" ]; then
-    # Set sign key password file if specified
-    if [ "${PWFILE}" ]; then
-        export ANDROID_PW_FILE=$PWFILE
+# Build signed ROM package if key mappings specified
+elif [ -n "${KEY_MAPPINGS}" ]; then
+    [ -n "${PWFILE}" ] && export ANDROID_PW_FILE="$PWFILE"
+
+    echo "${CLR_BLD_BLU}Building target-files-package${CLR_RST}"
+    m otatools target-files-package "${CMD[@]}"
+    checkExit
+
+    echo "${CLR_BLD_BLU}Signing target files APKs${CLR_RST}"
+    sign_target_files_apks -o -d "$KEY_MAPPINGS" \
+        "$TARGET_FILES_INTERMEDIATES/yaap_${DEVICE}-target_files.zip" \
+        "$DIR_RELEASE/YAAP-${YAAP_VERSION}-signed-target_files.zip"
+    checkExit
+
+    if [ "$FLAG_BACKUP_UNSIGNED" = 'y' ]; then
+        cp -f "$TARGET_FILES_INTERMEDIATES/yaap_${DEVICE}-target_files.zip" \
+              "$DIR_RELEASE/YAAP-${YAAP_VERSION}-unsigned-target_files.zip"
     fi
 
-    # Make target-files-package
-    m otatools target-files-package "$CMD"
+    echo "${CLR_BLD_BLU}Generating signed install package${CLR_RST}"
+    ota_from_target_files -k "$KEY_MAPPINGS/releasekey" \
+        --block \
+        "$DIR_RELEASE/YAAP-${YAAP_VERSION}-signed-target_files.zip" \
+        "$DIR_RELEASE/YAAP-${YAAP_VERSION}.zip"
     checkExit
 
-    echo -e "${CLR_BLD_BLU}Signing target files apks${CLR_RST}"
-    sign_target_files_apks -o -d $KEY_MAPPINGS \
-        "$TARGET_FILES_INTERMEDIATES/yaap_$DEVICE-target_files.zip" \
-        "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip"
-    checkExit
-
-    echo -e "${CLR_BLD_BLU}Generating signed install package${CLR_RST}"
-    ota_from_target_files -k $KEY_MAPPINGS/releasekey \
-        --block ${INCREMENTAL} \
-        "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip" \
-        "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
-    checkExit
-
-    if [ "$DELTA_TARGET_FILES" ]; then
-        # die if base target doesn't exist
+    if [ -n "$DELTA_TARGET_FILES" ]; then
         if [ ! -f "$DELTA_TARGET_FILES" ]; then
-                echo -e "${CLR_BLD_RED}Delta error: base target files don't exist ($DELTA_TARGET_FILES)${CLR_RST}"
-                exit 1
+            echo "${CLR_BLD_RED}Delta error: base target files don't exist ($DELTA_TARGET_FILES)${CLR_RST}"
+            exit 1
         fi
-        ota_from_target_files -k $KEY_MAPPINGS/releasekey \
-            --block --incremental_from $DELTA_TARGET_FILES \
-            "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip" \
-            "$DIR_RELEASE/YAAP-$YAAP_VERSION-delta.zip"
+        echo "${CLR_BLD_BLU}Generating delta OTA${CLR_RST}"
+        ota_from_target_files -k "$KEY_MAPPINGS/releasekey" \
+            --block --incremental_from "$DELTA_TARGET_FILES" \
+            "$DIR_RELEASE/YAAP-${YAAP_VERSION}-signed-target_files.zip" \
+            "$DIR_RELEASE/YAAP-${YAAP_VERSION}-delta.zip"
         checkExit
     fi
 
     if [ "$FLAG_IMG_ZIP" = 'y' ]; then
-        echo -e "${CLR_BLD_BLU}Generating signed fastboot package${CLR_RST}"
+        echo "${CLR_BLD_BLU}Generating signed fastboot package${CLR_RST}"
         img_from_target_files \
-            "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip" \
-            "$DIR_RELEASE/YAAP-$YAAP_VERSION-image.zip"
+            "$DIR_RELEASE/YAAP-${YAAP_VERSION}-signed-target_files.zip" \
+            "$DIR_RELEASE/YAAP-${YAAP_VERSION}-image.zip"
         checkExit
     fi
 
-# Build rom package with fastboot zip
+# Build ROM package with fastboot zip
 elif [ "$FLAG_IMG_ZIP" = 'y' ]; then
-    m otatools target-files-package "$CMD"
+    m otatools target-files-package "${CMD[@]}"
     checkExit
 
-    echo -e "${CLR_BLD_BLU}Generating install package${CLR_RST}"
+    echo "${CLR_BLD_BLU}Generating install package${CLR_RST}"
     ota_from_target_files \
-        "$TARGET_FILES_INTERMEDIATES/yaap_$DEVICE-target_files.zip" \
-        "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
+        "$TARGET_FILES_INTERMEDIATES/yaap_${DEVICE}-target_files.zip" \
+        "$DIR_RELEASE/YAAP-${YAAP_VERSION}.zip"
     checkExit
 
-    echo -e "${CLR_BLD_BLU}Generating fastboot package${CLR_RST}"
+    echo "${CLR_BLD_BLU}Generating fastboot package${CLR_RST}"
     img_from_target_files \
-        "$TARGET_FILES_INTERMEDIATES/yaap_$DEVICE-target_files.zip" \
-        "$DIR_RELEASE/YAAP-$YAAP_VERSION-image.zip"
+        "$TARGET_FILES_INTERMEDIATES/yaap_${DEVICE}-target_files.zip" \
+        "$DIR_RELEASE/YAAP-${YAAP_VERSION}-image.zip"
     checkExit
 
 else
-    m otapackage "$CMD"
+    m otapackage "${CMD[@]}"
     checkExit
 
-    cp -f $OUT/yaap_$DEVICE-ota.zip $OUT/YAAP-$YAAP_VERSION.zip
-    echo "Package Complete: $OUT/YAAP-$YAAP_VERSION.zip"
-
+    cp -f "$OUT/yaap_${DEVICE}-ota.zip" "$DIR_RELEASE/YAAP-${YAAP_VERSION}.zip"
+    checkExit
+    echo "${CLR_BLD_GRN}Package complete: $DIR_RELEASE/YAAP-${YAAP_VERSION}.zip${CLR_RST}"
 fi
-echo -e ""
+
+echo ""
 
 # Check the finishing time
-TIME_END=$(date +%s.%N)
+TIME_END=$(date +%s)
+ELAPSED=$(( TIME_END - TIME_START ))
 
-# Log those times at the end as a fun fact of the day
-echo -e "${CLR_BLD_GRN}Total time elapsed:${CLR_RST} ${CLR_GRN}$(echo "($TIME_END - $TIME_START) / 60" | bc) minutes ($(echo "$TIME_END - $TIME_START" | bc) seconds)${CLR_RST}"
-echo -e ""
+echo "${CLR_BLD_GRN}Total time elapsed:${CLR_RST} ${CLR_GRN}$(( ELAPSED / 60 )) minutes (${ELAPSED} seconds)${CLR_RST}"
+echo ""
 
 exit 0
