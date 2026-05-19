@@ -2,7 +2,4 @@
 PRODUCT_PACKAGES += \
     EmergencyInfo
 
-# Overlay
-PRODUCT_PACKAGES += \
-    FrameworksOverlayWiFiOnly \
-    SystemUIOverlayWiFiOnly
+PRODUCT_PACKAGE_OVERLAYS += vendor/yaap/overlay/wifionly
