@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <!-- Kernel -->
-  <project path="kernel/oneplus/sm8150" name="kernel_oneplus_sm8150" remote="yaap" clone-depth="1" />
+  <project path="kernel/oneplus/sm8150" name="kernel_oneplus_sm8150" remote="yaapex" clone-depth="1" revision="z" />
   <!-- Device -->
-  <project path="device/oneplus/sm8150-common" name="device_oneplus_sm8150-common" remote="yaapex"/>
-  <project path="device/oneplus/guacamoleb" name="device_oneplus_guacamoleb" remote="yaapex"/>
+  <project path="device/oneplus/sm8150-common" name="device_oneplus_sm8150-common" remote="yaapex" revision="z" />
+  <project path="device/oneplus/guacamoleb" name="device_oneplus_guacamoleb" remote="yaapex" revision="z"/>
   <!-- Vendor -->
-  <project path="vendor/oneplus/sm8150-common" name="vendor_oneplus_sm8150-common" remote="yaapex"/>
-  <project path="vendor/oneplus/guacamoleb" name="vendor_oneplus_guacamoleb" remote="yaap"/>
+  <project path="vendor/oneplus/sm8150-common" name="vendor_oneplus_sm8150-common" remote="yaapex" revision="z"/>
+  <project path="vendor/oneplus/guacamoleb" name="vendor_oneplus_guacamoleb" remote="yaapex" revision="z"/>
   <!-- Hardware -->
-  <project path="hardware/oneplus" name="hardware_oneplus" remote="yaap"/>
+  <project path="hardware/oplus" name="hardware_oplus" remote="yaapex" revision="z"/>
   <project name="xenxynon/certs" path="certs" remote="github" revision="main">
     <copyfile src="bluetooth.pk8" dest="vendor/yaap/signing/keys/bluetooth.pk8"/>
     <copyfile src="bluetooth.x509.pem" dest="vendor/yaap/signing/keys/bluetooth.x509.pem"/>
