@@ -145,17 +145,15 @@ echo
 # Lunch
 echo "${CLR_BLD_BLU}Lunching $DEVICE${CLR_RST} ${CLR_CYA}(Including dependencies sync)${CLR_RST}"
 echo
-lunch "yaap_$DEVICE-$BUILD_TYPE"
-checkExit
+lunch "yaap_$DEVICE-$BUILD_TYPE" || die "Lunch failed for $DEVICE"
 YAAP_VERSION="$(get_build_var YAAP_VERSION)"
-YAAP_DISPLAY_VERSION="$(grep -m1 'YAAP_VERSION := *' "$DIR_ROOT/vendor/yaap/config/version.mk" | sed 's/.*= //')"
 echo
 
 # Install-clean
 if [[ "$FLAG_INSTALLCLEAN_BUILD" == y ]]; then
     echo "${CLR_BLD_BLU}Cleaning compiled image files left from old builds${CLR_RST}"
     echo
-    m installclean "$CMD"
+    m installclean "$CMD" || die "installclean failed!"
 fi
 
 echo "${CLR_BLD_BLU}Starting compilation${CLR_RST}"
