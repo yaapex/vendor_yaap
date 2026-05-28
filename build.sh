@@ -146,10 +146,10 @@ echo
 echo "${CLR_BLD_BLU}Lunching $DEVICE${CLR_RST} ${CLR_CYA}(Including dependencies sync)${CLR_RST}"
 echo
 lunch "yaap_$DEVICE-$BUILD_TYPE"
-[[ "$(get_build_var TARGET_PRODUCT 2>/dev/null)" == "yaap_$DEVICE" ]] \
-    || die "Lunch failed for $DEVICE"
-YAAP_VERSION="$(get_build_var YAAP_VERSION)"
-[[ -z "$YAAP_VERSION" ]] && die "Failed to get YAAP_VERSION after lunch"
+[[ "$(get_build_var TARGET_PRODUCT 2>/dev/null)" == "yaap_$DEVICE" ]] || {
+    [[ -f out/error.log ]] && cat out/error.log
+    die "Lunch failed for $DEVICE"
+}
 echo
 
 # Install-clean
