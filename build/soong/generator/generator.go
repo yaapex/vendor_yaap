@@ -144,17 +144,26 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 	tools := map[string]android.Path{}
 
 	if len(g.properties.Tools) > 0 {
-		ctx.VisitDirectDepsProxy(func(proxy android.ModuleProxy) {
-			preferred := android.PrebuiltGetPreferred(ctx, proxy)
-			switch ctx.OtherModuleDependencyTag(preferred) {
+		ctx.VisitDirectDepsProxyAllowDisabled(func(proxy android.ModuleProxy) {
+			module := android.PrebuiltGetPreferred(ctx, proxy)
+			switch ctx.OtherModuleDependencyTag(module) {
 			case hostToolDepTag:
-				tool := ctx.OtherModuleName(proxy)
+				tool := ctx.OtherModuleName(module)
 				var path android.OptionalPath
-				if info, ok := android.OtherModuleProvider(ctx, preferred, android.HostToolProviderInfoProvider); ok {
-					path = info.HostToolPath
+
+				if t, ok := android.OtherModuleProvider(ctx, module, android.HostToolProviderInfoProvider); ok {
+					if !android.OtherModulePointerProviderOrDefault(ctx, module, android.CommonModuleInfoProvider).Enabled {
+						if ctx.Config().AllowMissingDependencies() {
+							ctx.AddMissingDependencies([]string{tool})
+						} else {
+							ctx.ModuleErrorf("depends on disabled module %q", tool)
+						}
+						break
+					}
+					path = t.HostToolPath
 				} else {
 					ctx.ModuleErrorf("%q is not a host tool provider", tool)
-					return
+					break
 				}
 
 				if path.Valid() {
@@ -168,8 +177,8 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 					ctx.ModuleErrorf("host tool %q missing output file", tool)
 				}
 			default:
-				if !android.IsSourceDepTagWithOutputTag(ctx.OtherModuleDependencyTag(preferred), "") {
-					ctx.ModuleErrorf("unknown dependency on %q", ctx.OtherModuleName(preferred))
+				if !android.IsSourceDepTagWithOutputTag(ctx.OtherModuleDependencyTag(module), "") {
+					ctx.ModuleErrorf("unknown dependency on %q", ctx.OtherModuleName(module))
 				}
 			}
 		})
@@ -179,7 +188,7 @@ func (g *Module) GenerateAndroidBuildActions(ctx android.ModuleContext) {
 		return
 	}
 
-	toolFiles := android.PathsForModuleSrcExcludes(ctx, g.properties.Tool_files, nil)
+	toolFiles := android.PathsForModuleSrc(ctx, g.properties.Tool_files)
 	for _, tool := range toolFiles {
 		g.implicitDeps = append(g.implicitDeps, tool)
 		if _, exists := tools[tool.Rel()]; !exists {

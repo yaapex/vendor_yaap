@@ -264,6 +264,7 @@ class DeviceTreeInfo(object):
 
 class DeviceTree(DeviceTreeInfo):
 	EXTRA_KEYS = (
+		('moorechip,device-id', 1),
 		('oplus,hw-id', 1),
 		('oplus,project-id', 1),
 		('qcom,oem-id', 1),
@@ -404,7 +405,7 @@ class InnerMergedDeviceTree(DeviceTreeInfo):
 	def get_name(self):
 		ext = os.path.splitext(os.path.basename(self.base))[1]
 		base_parts = self.filename_to_parts(self.base)
-		name_hash = hex(hash((self.plat_id, self.board_id, self.pmic_id)))
+		name_hash = hex(hash(self))
 		name = '-'.join(chain.from_iterable([base_parts] + [self.filename_to_parts(tp.filename, ignored_parts=base_parts) for tp in self.techpacks]))
 		final_name = '-'.join([name, name_hash]) + ext
 		return final_name

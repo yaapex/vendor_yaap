@@ -1,3 +1,9 @@
+# Exclude kernel platform repos from bp scanning
+PRODUCT_SOURCE_ROOT_DIRS += -kernel/platform
+
+# Allow vendor prebuilt repos to exclude themselves from bp scanning
+-include $(sort $(wildcard vendor/*/*/exclude-bp.mk))
+
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     dalvik.vm.debug.alloc=0 \
     keyguard.no_require_sim=true \
