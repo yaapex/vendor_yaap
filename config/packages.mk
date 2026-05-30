@@ -9,6 +9,7 @@ PRODUCT_PACKAGES += \
     htop \
     libsepol \
     nano \
+    TouchGestures \
     setcap \
     strace \
     vim
@@ -22,6 +23,7 @@ PRODUCT_PACKAGES += \
     PixelFrameworksOverlay \
     PixelSettingsOverlay \
     PixelSystemUIOverlay
+
 
 # Openssh
 PRODUCT_PACKAGES += \
