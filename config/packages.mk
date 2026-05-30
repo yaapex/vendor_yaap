@@ -24,6 +24,9 @@ PRODUCT_PACKAGES += \
     PixelSettingsOverlay \
     PixelSystemUIOverlay
 
+# Lineage interfaces
+PRODUCT_PACKAGES += \
+    framework_compatibility_matrix.lineage.xml
 
 # Openssh
 PRODUCT_PACKAGES += \
