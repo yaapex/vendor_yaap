@@ -152,6 +152,12 @@ lunch "yaap_$DEVICE-$BUILD_TYPE"
 }
 echo
 
+# Resolve YAAP_VERSION from build system after lunch
+YAAP_VERSION=$(get_build_var YAAP_VERSION 2>/dev/null)
+[[ -n "$YAAP_VERSION" ]] || die "YAAP_VERSION is empty — check vendor/yaap/config/*.mk"
+echo "${CLR_BLD_CYA}Version: $YAAP_VERSION${CLR_RST}"
+echo
+
 # Install-clean
 if [[ "$FLAG_INSTALLCLEAN_BUILD" == y ]]; then
     echo "${CLR_BLD_BLU}Cleaning compiled image files left from old builds${CLR_RST}"
@@ -224,7 +230,7 @@ elif [[ "$FLAG_IMG_ZIP" == y ]]; then
 else
     m otapackage "$CMD"; checkExit
     cp -f "$OUT/yaap_$DEVICE-ota.zip" "$OUT/YAAP-$YAAP_VERSION.zip"
-    echo "Package complete: $OUT/YAAP-$YAAP_VERSION.zip"
+    echo "${CLR_BLD_GRN}Package complete: $OUT/YAAP-$YAAP_VERSION.zip${CLR_RST}"
 fi
 
 echo
