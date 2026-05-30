@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# AOSPA build helper script
+# YAAP build helper script
 
-# red = errors, cyan = warnings, green = confirmations, blue = informational
+# Colors
 CLR_RST=$(tput sgr0)
-CLR_RED=$CLR_RST$(tput setaf 1)
 CLR_GRN=$CLR_RST$(tput setaf 2)
 CLR_CYA=$CLR_RST$(tput setaf 6)
 CLR_BLD=$(tput bold)
@@ -15,16 +14,19 @@ CLR_BLD_CYA=$CLR_BLD$(tput setaf 6)
 BUILD_TYPE="userdebug"
 
 die() { echo "${CLR_BLD_RED}$*${CLR_RST}" >&2; exit 1; }
+checkExit() { local code=$?; (( code != 0 )) && die "Build failed!"; }
 
-checkExit() {
-    local code=$?
-    (( code != 0 )) && die "Build failed!"
+# Generate JSON build info for OTA zips, skips silently if script is missing
+generate_json() {
+    local zip=$1
+    [[ -f "$DIR_ROOT/tools/generate_json_build_info.sh" && -f "$zip" ]] || return
+    echo "${CLR_BLD_BLU}Generating JSON build info${CLR_RST}"
+    bash "$DIR_ROOT/tools/generate_json_build_info.sh" "$zip"
 }
 
 showHelpAndExit() {
     echo "${CLR_BLD_BLU}Usage: $0 <device> [options]${CLR_RST}"
     echo
-    echo "${CLR_BLD_BLU}Options:${CLR_RST}"
     local -a opts=(
         "-h, --help            Display this help message"
         "-c, --clean           Wipe the tree before building"
@@ -44,7 +46,6 @@ showHelpAndExit() {
     exit 1
 }
 
-# Parse options
 long_opts="help,clean,installclean,repo-sync,build-type:,jobs:,module:,sign-keys:,pwfile:,backup-unsigned,delta:,imgzip,gapps,gms"
 getopt_cmd=$(getopt -o hcirt:j:m:s:p:bd:zg --long "$long_opts" \
     -n "$(basename "$0")" -- "$@") \
@@ -79,7 +80,6 @@ export DEVICE="$1"; shift
 [[ "$(uname -m)" == "x86_64" ]] \
     || die "error: unsupported arch (expected: x86_64, found: $(uname -m))"
 
-# Resolve root and validate
 cd "$(dirname "$0")"
 DIR_ROOT=$(pwd)
 [[ -d "$DIR_ROOT/vendor/yaap" ]] || die "error: insane root directory ($DIR_ROOT)"
@@ -88,13 +88,12 @@ DIR_RELEASE="$DIR_ROOT/releases/$DEVICE"
 mkdir -p "$DIR_RELEASE"
 echo "${CLR_BLD_CYA}Release output: $DIR_RELEASE${CLR_RST}"
 
-# Set up build environment
 echo "${CLR_BLD_BLU}Setting up the environment${CLR_RST}"
 echo
 . build/envsetup.sh
 echo
 
-# Resolve thread count
+# Default to all available cores
 if [[ -z "$JOBS" ]]; then
     if [[ "$(uname -s)" == Darwin ]]; then
         JOBS=$(sysctl -n machdep.cpu.core_count)
@@ -104,21 +103,18 @@ if [[ -z "$JOBS" ]]; then
 fi
 CMD="-j$JOBS"
 
-# Clean
 if [[ "$FLAG_CLEAN_BUILD" == y ]]; then
     echo "${CLR_BLD_BLU}Cleaning output files left from old builds${CLR_RST}"
     echo
     m clobber "$CMD"
 fi
 
-# Repo sync
 if [[ "$FLAG_SYNC" == y ]]; then
     echo "${CLR_BLD_BLU}Downloading the latest source files${CLR_RST}"
     echo
     repo sync -j"$JOBS" -c --current-branch --no-tags --force-sync
 fi
 
-# GApps
 if [[ "$FLAG_GAPPS" == y ]]; then
     export TARGET_BUILD_GAPPS=true
     echo "${CLR_BLD_CYA}GApps: enabled${CLR_RST}"
@@ -127,7 +123,6 @@ else
     echo "${CLR_BLD_CYA}GApps: disabled${CLR_RST}"
 fi
 
-# Signing mode
 if [[ -n "$KEY_MAPPINGS" ]]; then
     export YAAP_INLINE_SIGNING=false
     echo "${CLR_BLD_CYA}Inline signing: disabled (external keys provided)${CLR_RST}"
@@ -142,7 +137,6 @@ echo "${CLR_BLD_GRN}Building YAAP for $DEVICE${CLR_RST}"
 echo "${CLR_GRN}Start time: $(date)${CLR_RST}"
 echo
 
-# Lunch
 echo "${CLR_BLD_BLU}Lunching $DEVICE${CLR_RST} ${CLR_CYA}(Including dependencies sync)${CLR_RST}"
 echo
 lunch "yaap_$DEVICE-$BUILD_TYPE"
@@ -152,13 +146,12 @@ lunch "yaap_$DEVICE-$BUILD_TYPE"
 }
 echo
 
-# Resolve YAAP_VERSION from build system after lunch
+# Resolve version from build system post-lunch
 YAAP_VERSION=$(get_build_var YAAP_VERSION 2>/dev/null)
 [[ -n "$YAAP_VERSION" ]] || die "YAAP_VERSION is empty — check vendor/yaap/config/*.mk"
 echo "${CLR_BLD_CYA}Version: $YAAP_VERSION${CLR_RST}"
 echo
 
-# Install-clean
 if [[ "$FLAG_INSTALLCLEAN_BUILD" == y ]]; then
     echo "${CLR_BLD_BLU}Cleaning compiled image files left from old builds${CLR_RST}"
     echo
@@ -169,8 +162,6 @@ echo "${CLR_BLD_BLU}Starting compilation${CLR_RST}"
 echo
 
 TARGET_FILES_INTERMEDIATES="$OUT/obj/PACKAGING/target_files_intermediates"
-
-# ── Build dispatch ────────────────────────────────────────────────────────────
 
 if (( ${#MODULES[@]} > 0 )); then
     m "${MODULES[@]}" "$CMD"
@@ -193,6 +184,7 @@ elif [[ -n "$KEY_MAPPINGS" ]]; then
         "$DIR_RELEASE/YAAP-$YAAP_VERSION-signed-target_files.zip" \
         "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
     checkExit
+    generate_json "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
 
     if [[ -n "$DELTA_TARGET_FILES" ]]; then
         [[ -f "$DELTA_TARGET_FILES" ]] \
@@ -220,6 +212,7 @@ elif [[ "$FLAG_IMG_ZIP" == y ]]; then
         "$TARGET_FILES_INTERMEDIATES/yaap_$DEVICE-target_files.zip" \
         "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
     checkExit
+    generate_json "$DIR_RELEASE/YAAP-$YAAP_VERSION.zip"
 
     echo "${CLR_BLD_BLU}Generating fastboot package${CLR_RST}"
     img_from_target_files \
@@ -231,6 +224,7 @@ else
     m otapackage "$CMD"; checkExit
     cp -f "$OUT/yaap_$DEVICE-ota.zip" "$OUT/YAAP-$YAAP_VERSION.zip"
     echo "${CLR_BLD_GRN}Package complete: $OUT/YAAP-$YAAP_VERSION.zip${CLR_RST}"
+    generate_json "$OUT/YAAP-$YAAP_VERSION.zip"
 fi
 
 echo
